@@ -77,6 +77,9 @@ public class MainMenu : MonoBehaviour
     private float popupTime;
     private float popupDuration;
 
+    // for performance testing
+    private DateTime perfStart, perfStop;
+
     
     void Awake()
     {
@@ -153,13 +156,18 @@ public class MainMenu : MonoBehaviour
     
     void LoginCallback(FBResult result)
     {
-        Util.Log("LoginCallback");
+        this.perfStop = DateTime.Now;
+        TimeSpan span = this.perfStop - this.perfStart;
+        Util.Log("LoginCallback, time: " + span.TotalMilliseconds + "ms");
         
         if (FB.IsLoggedIn)
         {
+            Util.Log("FB is logged in (in LoginCallback)");
             OnLoggedIn();
         }
     }
+
+    // TODO: this query string is invalid, it doesn't seem to be suported anymore afte rthe API changes. 
     string meQueryString = "/v2.0/me?fields=id,first_name,friends.limit(100).fields(first_name,id,picture.width(128).height(128)),invitable_friends.limit(100).fields(first_name,id,picture.width(128).height(128))";
 
     void OnLoggedIn()
@@ -184,7 +192,7 @@ public class MainMenu : MonoBehaviour
         {
             Util.LogError(result.Error);
             // Let's just try again
-            FB.API(meQueryString, Facebook.HttpMethod.GET, APICallback);
+            //FB.API(meQueryString, Facebook.HttpMethod.GET, APICallback);
             return;
         }
         
@@ -373,6 +381,8 @@ public class MainMenu : MonoBehaviour
             GUI.Label( (new Rect(179 , 11, 287, 160)), "Login to Facebook", MenuSkin.GetStyle("text_only"));
             if (GUI.Button(LoginButtonRect, "", MenuSkin.GetStyle("button_login")))
             {
+                Util.Log("FB.Login about to be called");
+                this.perfStart = DateTime.Now;
                 FB.Login("public_profile,user_friends,email,publish_actions", LoginCallback);
             }
         }
